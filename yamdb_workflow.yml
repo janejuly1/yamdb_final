@@ -35,7 +35,7 @@ jobs:
         python -m flake8
         pytest
         # перейти в папку, содержащую manage.py — 
-        #<корневая_папка>/<папка_проекта>/manage.py
+        #<корневая_папка_infra_actions>/<папка_проекта>/manage.py
         cd api_yamdb/
         # запустить написанные разработчиком тесты
         python manage.py test
@@ -44,6 +44,7 @@ jobs:
       name: Push Docker image to Docker Hub
       runs-on: ubuntu-latest
       needs: tests
+      if: github.ref == 'refs/heads/master'
       steps:
         - name: Check out the repo
         # Проверка доступности репозитория Docker Hub для workflow
@@ -68,6 +69,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build_and_push_to_docker_hub
+    if: github.ref == 'refs/heads/master'
     steps:
     - name: executing remote ssh commands to deploy
       uses: appleboy/ssh-action@master
@@ -85,11 +87,12 @@ jobs:
           echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> .env
           echo DB_HOST=${{ secrets.DB_HOST }} >> .env
           echo DB_PORT=${{ secrets.DB_PORT }} >> .env
-          sudo docker-compose up -d 
+          sudo docker-compose up -d
 
   send_message:
     runs-on: ubuntu-latest
     needs: deploy
+    if: github.ref == 'refs/heads/master'
     steps:
     - name: send message
       uses: appleboy/telegram-action@master
